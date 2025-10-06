@@ -19,7 +19,9 @@ class GameEngine:
 
         self.player_score = 0
         self.ai_score = 0
+        self.target_score = 5   # default match length
         self.font = pygame.font.SysFont("Arial", 30)
+
 
     def handle_input(self):
         keys = pygame.key.get_pressed()
@@ -55,17 +57,58 @@ class GameEngine:
         screen.blit(ai_text, (self.width * 3//4, 20))
 
     def check_game_over(self, screen):
-        if self.player_score == 5 or self.ai_score == 5:
-            winner = "Player Wins!" if self.player_score == 5 else "AI Wins!"
+        if self.player_score == self.target_score or self.ai_score == self.target_score:
+            winner = "Player Wins!" if self.player_score == self.target_score else "AI Wins!"
 
-            # Render game over message
+            # Show winner text
             text = self.font.render(winner, True, WHITE)
-            text_rect = text.get_rect(center=(self.width // 2, self.height // 2))
+            text_rect = text.get_rect(center=(self.width // 2, self.height // 2 - 40))
             screen.blit(text, text_rect)
 
-            pygame.display.flip()  # Show the message immediately
+            # Show replay options
+            menu_font = pygame.font.SysFont("Arial", 24)
+            options = [
+                "Press 3 for Best of 3",
+                "Press 5 for Best of 5",
+                "Press 7 for Best of 7",
+                "Press ESC to Exit"
+            ]
+            for i, option in enumerate(options):
+                opt_text = menu_font.render(option, True, WHITE)
+                opt_rect = opt_text.get_rect(center=(self.width // 2, self.height // 2 + i * 30))
+                screen.blit(opt_text, opt_rect)
 
-            # Wait 3 seconds before quitting
-            pygame.time.delay(3000)
-            pygame.quit()
-            exit()
+            pygame.display.flip()
+
+            # Wait for input loop
+            waiting = True
+            while waiting:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        pygame.quit()
+                        exit()
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_3:
+                            self.target_score = 3
+                            self.reset_game()
+                            waiting = False
+                        elif event.key == pygame.K_5:
+                            self.target_score = 5
+                            self.reset_game()
+                            waiting = False
+                        elif event.key == pygame.K_7:
+                            self.target_score = 7
+                            self.reset_game()
+                            waiting = False
+                        elif event.key == pygame.K_ESCAPE:
+                            pygame.quit()
+                            exit()
+
+    
+    def reset_game(self):
+        """Reset scores and reposition ball/paddles for a new match."""
+        self.player_score = 0
+        self.ai_score = 0
+        self.ball.reset()
+        self.player.y = self.height // 2 - self.paddle_height // 2
+        self.ai.y = self.height // 2 - self.paddle_height // 2
